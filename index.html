@@ -50,7 +50,7 @@
 <script>
 /* ==== AYARLAR ==== */
 const PASSWORD = "Seloş123.";
-const TARGET = new Date("2025-12-17T21:35:00").getTime();
+const TARGET = new Date("2025-12-17T21:41:00").getTime();
 const TEXT = `Canımın içi,
 
 Bu yıl benim hayatıma giren en değerli insansın. Ne kadar komik ocak ayında senden bihaberken şu anda sensiz bir gelecek hayal edemiyorum. 2026 yılı bizim yılımız olacak, tüm hedeflerimize birlikte ulaşalım.
@@ -142,5 +142,41 @@ function showFinal(){
   document.body.appendChild(f);
 }
 </script>
+  function resetToLogin() {
+  // UI sıfırla
+  login.classList.remove('hidden');
+  countBox.classList.add('hidden');
+  pwd.value = '';
+
+  // Final ekranlarını temizle
+  document.getElementById('letter')?.remove();
+  document.getElementById('final')?.remove();
+
+  // Kalp interval’ını durdur
+  if (heartsId) {
+    clearInterval(heartsId);
+    heartsId = null;
+  }
+
+  // Final flag sıfırla
+  started = false;
+
+  // Müzik sıfırla
+  try {
+    music.pause();
+    music.currentTime = 0;
+  } catch (_) {}
+}
+
+// ✅ Sayfa bfcache’den geri gelse bile her seferinde şifre sor
+window.addEventListener('pageshow', () => {
+  resetToLogin();
+});
+
+// (opsiyonel ama iyi) Sekmeye geri dönünce de login’e dön
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) resetToLogin();
+});
+
 </body>
 </html>
