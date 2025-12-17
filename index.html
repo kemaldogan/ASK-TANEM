@@ -8,25 +8,27 @@
     body{margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#000;color:#fff;font-family:Segoe UI,system-ui;overflow:hidden}
     canvas{position:fixed;inset:0}
     .box{position:relative;z-index:2;background:rgba(255,255,255,.08);backdrop-filter:blur(10px);padding:32px;border-radius:20px;width:90%;max-width:420px;text-align:center}
-    input,button{width:100%;padding:12px;border-radius:12px;border:none;font-size:1rem;margin-top:10px}
+    input,button{width:100%;padding:12px;border-radius:12px;border:none;font-size:1rem;margin-top:10px;box-sizing:border-box}
     button{background:#00c6ff;font-weight:700;cursor:pointer}
+    button:hover{opacity:.95}
     .hidden{display:none}
     #countdown{font-size:2rem;margin-top:12px}
 
-    #letter{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:3}
-    #paper{background:#fff;color:#000;padding:32px;border-radius:16px;max-width:520px;width:90%;white-space:pre-wrap}
+    #letter{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:3;padding:18px;box-sizing:border-box}
+    #paper{background:#fff;color:#000;padding:32px;border-radius:16px;max-width:520px;width:100%;white-space:pre-wrap;line-height:1.6;text-align:left}
 
-    #final{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;z-index:5}
+    #final{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:800;z-index:5;padding:24px;box-sizing:border-box;text-align:center}
 
-    /* ✅ Kalpler artık yazının içine değil, ekrana (viewport) akacak */
+    /* Kalpler ekranda akış halinde */
     .heart{
       position: fixed;
       bottom: -20px;
       animation: fly 4s linear forwards;
       pointer-events: none;
       user-select: none;
+      opacity: .9;
     }
-    @keyframes fly{to{transform:translateY(-120vh);opacity:0}}
+    @keyframes fly{to{transform:translateY(-120vh) translateX(40px);opacity:0}}
   </style>
 </head>
 <body>
@@ -35,27 +37,28 @@
 <div class="box" id="login">
   <h2>Şifre</h2>
   <input id="pwd" type="password" placeholder="Şifreyi gir" />
-  <button id="enter">Devam et</button>
+  <button id="enter" type="button">Devam et</button>
 </div>
 
 <div class="box hidden" id="countBox">
   <h2>Hazır ol… ⏳</h2>
-  <div id="countdown"></div>
+  <div id="countdown">00:00:00</div>
 </div>
 
-<audio id="music" loop>
+<audio id="music" loop preload="auto">
   <source src="lady-gaga-paparazzi.mp3" type="audio/mpeg">
 </audio>
 
 <script>
 /* ==== AYARLAR ==== */
 const PASSWORD = "Seloş123.";
-const TARGET = new Date("2025-12-17T21:41:00").getTime();
+const TARGET = new Date("2025-12-17T21:45:00").getTime();
 const TEXT = `Canımın içi,
 
-Bu yıl benim hayatıma giren en değerli insansın. Ne kadar komik ocak ayında senden bihaberken şu anda sensiz bir gelecek hayal edemiyorum. 2026 yılı bizim yılımız olacak, tüm hedeflerimize birlikte ulaşalım.
+Bu yıl benim hayatıma giren en değerli insansın. Ne kadar komik ocak ayında senden bihaberken şu anda sensiz bir gelecek hayal edemiyorum. 2026 yılı bizim yılımız olacak, tüm hedeflerimize, hayallerimize birlikte ulaştığımız, birbirimizi hep en ileriye taşıdığımız bir yıl olsun. Bu yıl Noel babadan bir dileğim yok çünkü zaten sen en büyük dileğim artık hayatımda.
 
 Seni çoooooooooooooooook seviyorum AŞK TANEM :)))`;
+
 const FINAL = "İYİ Kİ VARSIN AŞK TANEM :)))";
 
 /* ==== ELEMENTLER ==== */
@@ -70,113 +73,123 @@ let started = false;
 let heartsId = null;
 
 /* ==== STARS ==== */
-const c=document.getElementById('stars'),x=c.getContext('2d');
-function resize(){c.width=innerWidth;c.height=innerHeight}
-addEventListener('resize',resize);resize();
-const stars=[...Array(120)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5}));
+const c = document.getElementById('stars');
+const x = c.getContext('2d');
+function resize(){ c.width = innerWidth; c.height = innerHeight; }
+addEventListener('resize', resize); resize();
+const stars = [...Array(120)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5}));
 (function draw(){
   x.clearRect(0,0,c.width,c.height);
   x.fillStyle='white';
   stars.forEach(s=>{x.beginPath();x.arc(s.x,s.y,s.r,0,Math.PI*2);x.fill()});
-  requestAnimationFrame(draw)
+  requestAnimationFrame(draw);
 })();
 
-/* ==== LOGIN ==== */
-enter.onclick=()=>{
-  if(pwd.value!==PASSWORD){alert('Şifre yanlış');return}
-  login.classList.add('hidden');
-  countBox.classList.remove('hidden');
-
-  // kullanıcı etkileşimi => autoplay izni
-  music.play().catch(()=>{});
-  if(Date.now()>=TARGET) startFinal();
-};
-
-/* ==== COUNTDOWN ==== */
-setInterval(()=>{
-  const d=TARGET-Date.now();
-  if(d<=0){countdown.textContent='00:00:00';startFinal();return}
-  const h=Math.floor(d/36e5),m=Math.floor(d%36e5/6e4),s=Math.floor(d%6e4/1e3);
-  countdown.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
-},1000);
-
-/* ==== FINAL ==== */
-function startFinal(){
-  if(started) return;
-  started=true;
-
-  music.currentTime=0;
-  music.play().catch(()=>{});
-
-  const l=document.createElement('div'); l.id='letter';
-  l.innerHTML=`<div id="paper"></div>`;
-  document.body.appendChild(l);
-
-  const p=l.querySelector('#paper');
-  let i=0;
-
-  const t=setInterval(()=>{
-    p.textContent += TEXT.charAt(i++);
-    if(i>=TEXT.length){
-      clearInterval(t);
-      setTimeout(showFinal,1200);
-    }
-  },80);
-
-  // ✅ Kalpleri yazının içine değil, body’ye ekliyoruz -> akış halinde uçuyorlar
-  heartsId = setInterval(()=>{
-    const h=document.createElement('div');
-    h.className='heart';
-    h.textContent='❤️';
-    h.style.left=Math.random()*100+'%';
-    h.style.fontSize=(16 + Math.random()*20) + 'px';
-    document.body.appendChild(h);
-    setTimeout(()=>h.remove(),4000);
-  },150);
-}
-
-function showFinal(){
-  const f=document.createElement('div');
-  f.id='final';
-  f.textContent=FINAL;
-  document.body.appendChild(f);
-}
-</script>
-  function resetToLogin() {
-  // UI sıfırla
+/* ==== RESET (bfcache/back tuşu vs) ==== */
+function resetToLogin() {
+  // UI
   login.classList.remove('hidden');
   countBox.classList.add('hidden');
   pwd.value = '';
 
-  // Final ekranlarını temizle
+  // Overlays
   document.getElementById('letter')?.remove();
   document.getElementById('final')?.remove();
 
-  // Kalp interval’ını durdur
-  if (heartsId) {
-    clearInterval(heartsId);
-    heartsId = null;
-  }
+  // Timers
+  if (heartsId) { clearInterval(heartsId); heartsId = null; }
 
-  // Final flag sıfırla
+  // Flags
   started = false;
 
-  // Müzik sıfırla
-  try {
-    music.pause();
-    music.currentTime = 0;
-  } catch (_) {}
+  // Music
+  try { music.pause(); music.currentTime = 0; } catch (_) {}
 }
 
-// ✅ Sayfa bfcache’den geri gelse bile her seferinde şifre sor
-window.addEventListener('pageshow', () => {
-  resetToLogin();
-});
+// Sayfa bfcache’den dönse bile her seferinde şifre sorulsun
+window.addEventListener('pageshow', resetToLogin);
+// Sekmeye geri gelince de resetle (opsiyonel ama stabil)
+document.addEventListener('visibilitychange', () => { if (!document.hidden) resetToLogin(); });
 
-// (opsiyonel ama iyi) Sekmeye geri dönünce de login’e dön
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) resetToLogin();
-});
+/* ==== LOGIN ==== */
+function onEnter(){
+  if (pwd.value !== PASSWORD) { alert('Şifre yanlış'); return; }
 
+  login.classList.add('hidden');
+  countBox.classList.remove('hidden');
+
+  // Kullanıcı etkileşimiyle müziği başlat (autoplay engeline takılmaz)
+  music.currentTime = 0;
+  music.play().catch(()=>{});
+
+  // Tarih geçtiyse direkt final
+  if (Date.now() >= TARGET) startFinal();
+}
+enter.addEventListener('click', onEnter);
+pwd.addEventListener('keydown', (e)=>{ if(e.key==='Enter') onEnter(); });
+
+/* ==== COUNTDOWN ==== */
+setInterval(()=>{
+  const d = TARGET - Date.now();
+  if (d <= 0) {
+    countdown.textContent = '00:00:00';
+    startFinal();
+    return;
+  }
+  const h = Math.floor(d/36e5);
+  const m = Math.floor((d%36e5)/6e4);
+  const s = Math.floor((d%6e4)/1e3);
+  countdown.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}, 1000);
+
+/* ==== FINAL ==== */
+function startFinal(){
+  if (started) return;
+  // Login yapılmadan tetiklenmesin
+  if (countBox.classList.contains('hidden')) return;
+  // Zaman gelmeden tetiklenmesin
+  if (Date.now() < TARGET) return;
+
+  started = true;
+
+  // Her girişte baştan çalsın + loop
+  music.currentTime = 0;
+  music.play().catch(()=>{});
+
+  const l = document.createElement('div');
+  l.id = 'letter';
+  l.innerHTML = `<div id="paper"></div>`;
+  document.body.appendChild(l);
+
+  const p = l.querySelector('#paper');
+  let i = 0;
+
+  const t = setInterval(()=>{
+    p.textContent += TEXT.charAt(i++);
+    if (i >= TEXT.length) {
+      clearInterval(t);
+      setTimeout(showFinal, 1200);
+    }
+  }, 80);
+
+  // Kalpler ekranda akış halinde
+  heartsId = setInterval(()=>{
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.textContent = '❤️';
+    h.style.left = (Math.random()*100) + '%';
+    h.style.fontSize = (16 + Math.random()*20) + 'px';
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(), 4000);
+  }, 150);
+}
+
+function showFinal(){
+  const f = document.createElement('div');
+  f.id = 'final';
+  f.textContent = FINAL;
+  document.body.appendChild(f);
+}
+</script>
 </body>
 </html>
